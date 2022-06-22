@@ -15,12 +15,12 @@ If you'd like, install the resulting binary to a location in your `$PATH`.
 ## Usage
 
 ```bash
-trekscii [height] [width]
+./trekscii [height] [width]
 ```
 e.g.
 
 ```bash
-trekscii 25 85
-trekscii 35 $(tput cols)               # terminal width, fixed height
-trekscii $(tput lines) $(tput cols)    # full-terminal
+./trekscii 25 85
+./trekscii 35 $(tput cols)               # terminal width, fixed height
+./trekscii $(tput lines) $(tput cols)    # full-terminal
 ```
