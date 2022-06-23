@@ -136,6 +136,20 @@ const string CONSTELLATION_2 = R"CONST(   *   '*
                        *
                *
                      *)CONST";
+
+const string CONSTELLATION_3 = R"CONST(   .       . 
+ +  :      .
+           :       _
+       .   !   '  (_)
+          ,|.' 
+-  -- ---(-O-`--- --  -
+         ,`|'`.
+       ,   !    .
+           :       :  " 
+           .     --+--
+ .:        .       !)CONST";
+
+
 const string COMET_1 = R"COMET(                      .:'
          ....     _.::'
        .:-""-:.  (_.'
@@ -146,7 +160,9 @@ const string COMET_1 = R"COMET(                      .:'
         `''''`)COMET";
 
 
-const vector<string> SPACE_ELEMENTS = {MOON_1, MOON_2, MOON_3, PLANET_1, PLANET_2, CONSTELLATION_1, CONSTELLATION_2, COMET_1};
+const vector<string> SPACE_ELEMENTS = {CONSTELLATION_1, CONSTELLATION_2, CONSTELLATION_3, PLANET_1, PLANET_2, COMET_1, MOON_1, MOON_2, MOON_3};
+const vector<string> STARS = {".", "*", "'", "o", "O", "+", "0"};
+const vector<string> COLORS = {"\x1b[31m", "\x1b[33m", "\x1b[35m", "\x1b[37m", "\x1b[36m"};
 
 
 
@@ -266,11 +282,6 @@ int main(int argc, char** argv) {
     // ascii-rendered starfield
     vector<vector<string>> render(dimY - 2, vector<string>(dimX));
 
-
-    vector<string> stars = {".", "*", "'", "o", "O", "+", "0", "`"};
-    vector<string> colors = {"\x1b[31m", "\x1b[33m", "\x1b[35m", "\x1b[37m", "\x1b[36m"};
-
-
     // initialize empty field
     for (int i = 0; i < field.size(); i++)
         for (int j = 0; j < field[i].size(); j++)
@@ -330,7 +341,7 @@ int main(int argc, char** argv) {
                         crowded = true;
                 
                 if (!crowded)
-                    field[i][j] = stars[rand() % stars.size()];
+                    field[i][j] = STARS[rand() % STARS.size()];
             }
         }
     }
@@ -346,8 +357,7 @@ int main(int argc, char** argv) {
 
     for (int i = 0; i < field.size(); i++) {
         for (int j = 0; j < field[i].size(); j++) {
-            string color = colors[rand() % colors.size()];
-
+            const string color = COLORS[rand() % COLORS.size()];
             int randDec = rand() % 20;
 
             // Add surrounding flare to special stars
