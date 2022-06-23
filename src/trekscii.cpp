@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <sstream>
 #include <cmath>
+#include <assert.h>
+#include <random>
 
 using namespace std; // sorry bjarne
 
@@ -33,10 +35,6 @@ const string BIRD_OF_PREY_2 = R"SHIP(     _o_
  _,---O---,_
  `         ')SHIP";
 
- const string ENTERPRISE_1 = R"SHIP(======o==o  ___---___  
-      \\|| ============
-      __\\| /a/        
-      \_______/)SHIP";
 
 const string BORG_CUBE = R"SHIP(    ___________
    /-/_"/-/_/-/|
@@ -48,31 +46,20 @@ const string BORG_CUBE = R"SHIP(    ___________
  |='!+|-:]|-|/
   ----------)SHIP";
 
-
 const string TINY_SHIP = ".-=-.";
 
-const string ENTERPRISE_2 = R"SHIP(___________________          _-_         
+ const string ENTERPRISE_1 = R"SHIP(======o==o  ___---___
+      \\|| ============
+      __\\| /a/
+      \_______/)SHIP";
+
+const string ENTERPRISE_2 = R"SHIP(___________________          _-_
 \__(==========/_=_/ ____.---'---`---.____
             \_a\    \----._________.----/
-              \a\   /aa/    `-_-'        
-          __,--`.`-'..'-_                
-         /____aaaaaaaaaa||               
+              \a\   /aa/    `-_-'
+          __,--`.`-'..'-_
+         /____aaaaaaaaaa||
               `--.____,-')SHIP";
-
-const string SHUTTLE_1 = R"SHIP(   __________         
-  //a_||a_a|a`.       
- //_/aa|[_]|aaa`.     
-/______|___|_____\    
-\______|___|___,-'    
- [_][______][_>       )SHIP";
-
-/* |                 _____
-// |                /     \ 
-// |               /|     |\
-// |              /_|_____|_\
-// |             _\_|_____|_/_
-// |            <_>`-\___/-'<_>
-*/
 
 const string ENTERPRISE_3 = R"SHIP(  _      _-_      _
 _|_|.---'---`---.|_|_
@@ -81,6 +68,58 @@ _|_|.---'---`---.|_|_
       `.'a_a`.'
        |a(_)a|
         `___')SHIP";
+
+
+const string SHUTTLE_1 = R"SHIP(   __________
+  //a_||a_a|a`.
+ //_/aa|[_]|aaa`.
+/______|___|_____\
+\______|___|___,-'
+ [_][______][_>)SHIP";
+
+const string SHUTTLE_2 = R"SHIP(     _____
+    /aaaaa\
+   /|aaaaa|\
+  /_|_____|_\
+ _\_|_____|_/_
+<_>`-\___/-'<_>)SHIP";
+
+const string GALAXY_CLASS = R"SHIP(               ___.----~~~----.___ 
+,--------.-.,-'-------------------`
+`--------"-'-.,---`~~~-----~~~'
+ '---'-._____/)SHIP";
+
+const string BOMBULBAN_BARBIRD = R"SHIP(   _...--'~~~'-.=========--.
+,-'-,----,------\-,~~~~~[@`-\
+`-.-`----`------|='======\_-|
+   `---.______.-'          `|)SHIP";
+
+
+const string ENTERPRISE_4 = R"SHIP(________________        _
+\__(=======/_=_/____.--'-`--.___
+          \a\   `,--,-.___.----'
+        .--`\\--'../
+       '---._____.|])SHIP";
+
+const string VOYAGER = R"SHIP(              __,--=====-.__
+ _________,--'_,--'/_-__-___`--._
+{======>________,._.-------------'
+       ``---._____/)SHIP";
+
+const string NEBULA_CLASS = R"SHIP( _______
+[_______].----~~~----.___
+  /---/------------------`
+.-------.-)~~-----~~~'
+`-------"-')SHIP";
+
+const string DEFIANT = R"SHIP(       _________________________
+ __.--'--,.-'a---------'--'--'a/`-.__
+|__--(--(a|aaaaNX-74205aa====a/-----.`--._
+   `---.__\aa--========)>aaaaa|__|___)_>aa`-.
+           \_________|________/aaaaaaaa`----')SHIP";
+
+
+
 
 const vector<string> SHIPS = {SHUTTLE_1, ENTERPRISE_1, ENTERPRISE_2, ENTERPRISE_3, BORG_CUBE, BIRD_OF_PREY_1, BIRD_OF_PREY_2};
 
@@ -162,7 +201,7 @@ const string COMET_1 = R"COMET(                      .:'
 
 const vector<string> SPACE_ELEMENTS = {CONSTELLATION_1, CONSTELLATION_2, CONSTELLATION_3, PLANET_1, PLANET_2, COMET_1, MOON_1, MOON_2, MOON_3};
 const vector<string> STARS = {".", "*", "'", "o", "O", "+", "0"};
-const vector<string> COLORS = {"\x1b[31m", "\x1b[33m", "\x1b[35m", "\x1b[37m", "\x1b[36m"};
+const vector<string> COLORS = {"\x1b[31m", "\x1b[33m", "\x1b[32m", "\x1b[35m", "\x1b[37m", "\x1b[36m"};
 
 
 
@@ -249,14 +288,14 @@ void Reverse(vector<vector<char>>& mat)
 
 
 // Overlay one matrix onto another
-void Overlay(vector<vector<string>>& base, const vector<vector<char>>& overlay, int x, int y)
+void Overlay(vector<vector<string>>& base, const vector<vector<char>>& overlay, int x, int y, string color = ENDC)
 {
     for (int i = 0; i < overlay.size(); i++)
     {
         for (int j = 0; j < overlay[i].size(); j++)
         {
             if (overlay[i][j] == 'a') base[y + i][x + j] = ' ';
-            else if (overlay[i][j] != ' ') base[y + i][x + j] = "\x1b[1m" + string(1, overlay[i][j]) + "\x1b[0m";
+            else if (overlay[i][j] != ' ') base[y + i][x + j] = color +"\x1b[1m" + string(1, overlay[i][j]) + "\x1b[0m";
         }
     }
 }
@@ -288,7 +327,7 @@ int main(int argc, char** argv) {
             field[i][j] = " ";
 
     int area = dimX * dimY;
-    int clusterCount = 1;//round(max(1, area / 2000));
+    int clusterCount = round(max(1, area / 2000));
 
     vector<pair<int, int>> clusterCenters(clusterCount);
 
@@ -328,8 +367,8 @@ int main(int argc, char** argv) {
             // int probability = (int) (horizProbability * (1.0 + (abs((int)((field.size() / 2) - i)) + 1) / 2.0));
 
 
-            // if (minManhattanDistance < 25) {
-            if (rand() % minManhattanDistance == 0) {
+            // if (minManhattanDistance < 100) {
+            if (rand() % max(1, (minManhattanDistance / 2)) == 0) {
                 // Check for overcrowding of stars
 
                 bool crowded = false;
@@ -354,10 +393,31 @@ int main(int argc, char** argv) {
     render.push_back(row);
     vector<char> skipChars = {'-', '|', '/', '\\'};
 
+    vector<vector<string>> colorBands = {{"\x1b[31m", "\x1b[33m"}, {"\x1b[34m", "\x1b[35m"}, {"\x1b[36m", "\x1b[32m"}};
+    // vector<vector<string>> colorBands = {{COLORS[0], COLORS[1]}, {COLORS[2], COLORS[3]}, {COLORS[4], COLORS[5]}};
+    // vector<vector<string>> colorBands = {{COLORS[0]}, {COLORS[1]}, {COLORS[2]}, {COLORS[3]}, {COLORS[4]}, {COLORS[5]}};
+    int bandCount = colorBands.size();
+    std::random_shuffle(colorBands.begin(), colorBands.end());
+
 
     for (int i = 0; i < field.size(); i++) {
         for (int j = 0; j < field[i].size(); j++) {
-            const string color = COLORS[rand() % COLORS.size()];
+            
+            string color;
+            
+            // if we're in the right band, have a 50% chance of picking that band's color
+            // bands are calculated radially using manhattan distance
+
+            int band = (abs(i - (dimY / 2)) + abs(j - (dimX / 2))) / ((((dimX + dimY) + 2) / 2) / bandCount);
+            assert(band < colorBands.size());
+
+            // bias it towards using the band color but allow randomness too
+            if (rand() % 10 < 4)
+                color = colorBands[band][rand() % colorBands[band].size()];
+            else
+                color = COLORS[rand() % COLORS.size()];
+
+            // get random number for the star decorations
             int randDec = rand() % 20;
 
             // Add surrounding flare to special stars
@@ -404,22 +464,33 @@ int main(int argc, char** argv) {
 
             if (rand() % 2 == 0) Reverse(elMat);
             Overlay(render, elMat, x, y);
+            // Overlay(render, elMat, x, y, COLORS[rand() % COLORS.size()]);
         }
     }
 
-
-    vector<vector<char>> ship = LiteralToMat(SHIPS[rand() % SHIPS.size()]);
-    int shipLength = Squarify(ship);
-    int shipHeight = ship.size();
-
-    int x = rand() % (render[0].size() - shipLength);
-    int y = rand() % (render.size() - shipHeight);
-
-    if (x + (shipLength / 2) > (dimX / 2))
-        Reverse(ship);
     
-    Overlay(render, ship, x, y);
+    int maxShipCount = max(1, clusterCount);
+    int probability = 1;
+    cout << maxShipCount << endl;
 
+    for (int i = 0; i < maxShipCount; i++)
+    {
+        if (rand() % probability == 0)
+        {
+            vector<vector<char>> ship = LiteralToMat(SHIPS[rand() % SHIPS.size()]);
+            int shipLength = Squarify(ship);
+            int shipHeight = ship.size();
+
+            int x = rand() % (render[0].size() - shipLength);
+            int y = rand() % (render.size() - shipHeight);
+
+            if (x + (shipLength / 2) > (dimX / 2))
+                Reverse(ship);
+            
+            Overlay(render, ship, x, y);
+            probability *= 4;
+        }
+    }
 
         // bool reverse = rand() % 1;
     // if (reverse) 
