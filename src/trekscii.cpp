@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     int dimY = std::stoi(argv[1]);
     int dimX = std::stoi(argv[2]);
 
-    Canvas canvas = Canvas(dimX, dimY);
+    Canvas canvas = Canvas(dimX, dimY - 2);
     canvas.generate();
     canvas.print();
 }

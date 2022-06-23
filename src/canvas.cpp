@@ -81,6 +81,7 @@ void Canvas::renderStars()
     render.insert(render.begin(), row);
     render.push_back(row);
 
+    // TODO: better organize this stuff
     std::vector<char> skipChars = {'-', '|', '/', '\\'};
 
     std::vector<std::vector<std::string>> colorBands = {{"\x1b[31m", "\x1b[33m"}, {"\x1b[34m", "\x1b[35m"}, {"\x1b[36m", "\x1b[32m"}};
@@ -98,7 +99,10 @@ void Canvas::renderStars()
             // if we're in the right band, have a 50% chance of picking that band's color
             // bands are calculated radially using manhattan distance
 
-            int band = (abs(i - (h / 2)) + abs(j - (w / 2))) / ((((w + h) + 2) / 2) / bandCount);
+            size_t curDist = GetManhattanDist(i, j, h / 2, w / 2);
+            size_t maxDist  = GetManhattanDist(0, 0, h / 2, w / 2) + bandCount;
+            int band = curDist / (maxDist / bandCount);
+
             assert(band < colorBands.size());
 
             // bias it towards using the band color but allow randomness too
@@ -146,7 +150,7 @@ void Canvas::overlayArt()
 {
     // Add ship to rendered starfield
     for (std::string el : SPACE_ART) {
-        if (rand() % 5 == 0) {
+        if (rand() % 8 == 0) {
             std::vector<std::vector<char>> elMat = LiteralToMat(el);
             int length = Squarify(elMat);
             int height = elMat.size();
