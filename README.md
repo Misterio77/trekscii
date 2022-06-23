@@ -1,7 +1,7 @@
 # trekscii
 
-An ascii star trek scene generator.
-
+An ASCII Star Trek scene generator! Ex:
+![demo](demo.png)
 
 ## Compilation
 
