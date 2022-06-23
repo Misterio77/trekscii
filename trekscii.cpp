@@ -3,36 +3,40 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include <cmath>
 
 using namespace std; // sorry bjarne
 
-const int PADDING = 3;
+const int PADDING = 1;
 const int HORIZ_PLACEMNET_PADDING = 4;
 const int VERT_PLACEMENT_PADDING = 2;
+const double VIGNETTE = 0.25;
+
 const string ENDC = "\x1b[0m";
 
 
 /*=====================================
     Star trek ship ASCII art
 ======================================*/
+// 'a' encodes an actual empty space, as opposed to ' ' which denotes transparency.
 
 const string BIRD_OF_PREY_1 = R"SHIP(   __
  /|
-/ \
-\  \
+/a\
+\aa\
 }]::)==-{)
-/  /
-\ /
+/aa/
+\a/
  \|__)SHIP";
 
 const string BIRD_OF_PREY_2 = R"SHIP(     _o_
  _,---O---,_
  `         ')SHIP";
 
- const string ENTERPRISE_1 = R"SHIP(  ___---___  o==o====== 
-============ ||//
-        \ \ |//__
-        \_______/)SHIP";
+ const string ENTERPRISE_1 = R"SHIP(======o==o  ___---___  
+      \\|| ============
+      __\\| /a/        
+      \_______/)SHIP";
 
 const string BORG_CUBE = R"SHIP(    ___________
    /-/_"/-/_/-/|
@@ -49,15 +53,15 @@ const string TINY_SHIP = ".-=-.";
 
 const string ENTERPRISE_2 = R"SHIP(___________________          _-_         
 \__(==========/_=_/ ____.---'---`---.____
-            \_ \    \----._________.----/
-              \ \   /  /    `-_-'        
+            \_a\    \----._________.----/
+              \a\   /aa/    `-_-'        
           __,--`.`-'..'-_                
-         /____          ||               
+         /____aaaaaaaaaa||               
               `--.____,-')SHIP";
 
 const string SHUTTLE_1 = R"SHIP(   __________         
-  // _|| _ | `.       
- //_/  |[_]|   `.     
+  //a_||a_a|a`.       
+ //_/aa|[_]|aaa`.     
 /______|___|_____\    
 \______|___|___,-'    
  [_][______][_>       )SHIP";
@@ -73,12 +77,14 @@ const string SHUTTLE_1 = R"SHIP(   __________
 const string ENTERPRISE_3 = R"SHIP(  _      _-_      _
 _|_|.---'---`---.|_|_
 \----._________.----/
-    `.  `]-['  ,'
-      `.' _ `.'
-       | (_) |
+    `.aa`]-['aa,'
+      `.'a_a`.'
+       |a(_)a|
         `___')SHIP";
 
 const vector<string> SHIPS = {SHUTTLE_1, ENTERPRISE_1, ENTERPRISE_2, ENTERPRISE_3, BORG_CUBE, BIRD_OF_PREY_1, BIRD_OF_PREY_2};
+
+// const vector<string> SHIPS = {ENTERPRISE_2};
 
 
 /*==========================================
@@ -86,35 +92,38 @@ const vector<string> SHIPS = {SHUTTLE_1, ENTERPRISE_1, ENTERPRISE_2, ENTERPRISE_
 ============================================*/
 
 const string MOON_1 = R"MOON(   _..._   
- .::::. `. 
-:::::::.  :
-::::::::  :  
-`::::::' .'
+ .::::.a`.
+:::::::.aa:
+::::::::aa:
+`::::::'a.'
   `'::'-')MOON";
 
 const string MOON_2 = R"MOON( ,-,-.
-/.( +.\
-\ {. */
+/.(a+.\
+\a{.a*/
  `-`-')MOON";
 
 
+const string MOON_3 = R"MOON( .-.
+(a(
+ `-')MOON";
 
 const string PLANET_1 = R"PLANET(         _____
-      .-'.  ':'-.
-    .''::: .:    '.
-   /   :::::'      \
-  ;.    ':' `       ;
-  |       '..       |
-  ; '      ::::.    ;
-   \       '::::   /
-    '.      :::  .'
+      .-'.aa':'-.
+    .'':::a.:aaaa'.
+   /aaa:::::'aaaaaa\
+  ;.aaaa':'a`aaaaaaa;
+  |aaaaaaa'..aaaaaaa|
+  ;a'aaaaaa::::.aaaa;
+   \aaaaaaa'::::aaa/
+    '.aaaaaa:::aa.'
       '-.___'_.-')PLANET";
 
 const string PLANET_2 = R"PLANET( .-.,="``"=. 
- '=/_       \  
-  |  '=._    |
-   \     `=./`,
-    '=.__.=' `=')PLANET";
+ '=/_aaaaaaa\  
+  |aa'=._aaaa|
+   \aaaaa`=./`,
+    '=.__.='a`=')PLANET";
 
 const string CONSTELLATION_1 = R"CONST(         '
     *          .
@@ -130,13 +139,14 @@ const string CONSTELLATION_2 = R"CONST(   *   '*
 const string COMET_1 = R"COMET(                      .:'
          ....     _.::'
        .:-""-:.  (_.'
-     .:/      \:.
-     :|        |:
-     ':\      /:'
+     .:/aaaaaa\:.
+     :|aaaaaaaa|:
+     ':\aaaaaa/:'
       '::-..-::'
         `''''`)COMET";
 
-const vector<string> SPACE_ELEMENTS = {MOON_1, MOON_2, PLANET_1, PLANET_2, CONSTELLATION_1, CONSTELLATION_2, COMET_1};
+
+const vector<string> SPACE_ELEMENTS = {MOON_1, MOON_2, MOON_3, PLANET_1, PLANET_2, CONSTELLATION_1, CONSTELLATION_2, COMET_1};
 
 
 
@@ -229,7 +239,8 @@ void Overlay(vector<vector<string>>& base, const vector<vector<char>>& overlay, 
     {
         for (int j = 0; j < overlay[i].size(); j++)
         {
-            if (overlay[i][j] != ' ') base[y + i][x + j] = overlay[i][j];
+            if (overlay[i][j] == 'a') base[y + i][x + j] = ' ';
+            else if (overlay[i][j] != ' ') base[y + i][x + j] = "\x1b[1m" + string(1, overlay[i][j]) + "\x1b[0m";
         }
     }
 }
@@ -245,11 +256,15 @@ int main(int argc, char** argv) {
     fclose(devrnd);
     srand(seed);
     
+
+    int dimY = stoi(argv[1]);
+    int dimX = stoi(argv[2]);
+
     // randomly generated starfield
-    vector<vector<string>>  field(stoi(argv[1]) - 2, vector<string>(stoi(argv[2])));
+    vector<vector<string>>  field(dimY - 2, vector<string>(dimX));
     
     // ascii-rendered starfield
-    vector<vector<string>> render(stoi(argv[1]) - 2, vector<string>(stoi(argv[2])));
+    vector<vector<string>> render(dimY - 2, vector<string>(dimX));
 
 
     vector<string> stars = {".", "*", "'", "o", "O", "+", "0", "`"};
@@ -261,18 +276,49 @@ int main(int argc, char** argv) {
         for (int j = 0; j < field[i].size(); j++)
             field[i][j] = " ";
 
+    int area = dimX * dimY;
+    int clusterCount = 1;//round(max(1, area / 2000));
+
+    vector<pair<int, int>> clusterCenters(clusterCount);
+
+    for (int i = 0; i < clusterCount; i++)
+    {
+        clusterCenters[i] = pair<int, int>
+        {
+            round((rand() % (int)round(dimY - (2 * (dimY * VIGNETTE)))) + (dimY * VIGNETTE)),
+            round((rand() % (int)round(dimX - (2 * (dimX * VIGNETTE)))) + (dimX * VIGNETTE)),
+        };
+    }
+
 
     for (int i = 0 ; i < field.size(); i++) {
         for (int j = PADDING; j < field[i].size() - PADDING; j++) {
+            int minManhattanDistance = abs(i - clusterCenters[0].first) + abs(j - clusterCenters[0].second);
+            int clusterIndex = 0;
+
+            for (int c = 1; c < clusterCenters.size(); c++) {
+                int manhattanDistance = abs(i - clusterCenters[c].first) + abs(j - clusterCenters[c].second);
+                if (manhattanDistance < minManhattanDistance) {
+                    minManhattanDistance = manhattanDistance;
+                    clusterIndex = c;
+                }
+            }
+
+            minManhattanDistance += 1;
+            // minManhattanDistance *= 10;
+            // minManhattanDistance -= 9;
+            
+            // cout << clusterIndex << ", " << minManhattanDistance << endl;
 
             // Find prob of placing a star based on the distance to the center of frame in order to create a cluster
             // (many of these numbers are arbitrary, just because they look good!)
-            int distanceToCenterHoriz = abs((int)(((field[i].size() - (PADDING * 2)) / 2) - (j - PADDING)));
-            int horizProbability = ((distanceToCenterHoriz * 1.2) + 1);
-            int probability = (int) (horizProbability * (1.0 + (abs((int)((field.size() / 2) - i)) + 1) / 2.0));
+            // int distanceToCenterHoriz = abs((int)(((field[i].size() - (PADDING * 2)) / 2) - (j - PADDING)));
+            // int horizProbability = ((distanceToCenterHoriz * 1.2) + 1);
+            // int probability = (int) (horizProbability * (1.0 + (abs((int)((field.size() / 2) - i)) + 1) / 2.0));
 
 
-            if (rand() % probability == 0) {
+            // if (minManhattanDistance < 25) {
+            if (rand() % minManhattanDistance == 0) {
                 // Check for overcrowding of stars
 
                 bool crowded = false;
@@ -283,39 +329,54 @@ int main(int argc, char** argv) {
                     if (field[(max(0, i - x))][j] != " " || field[(min((int)field.size() - 1, i + x))][j] != " ")
                         crowded = true;
                 
-                if (!crowded) {field[i][j] = stars[rand() % stars.size()];}
+                if (!crowded)
+                    field[i][j] = stars[rand() % stars.size()];
             }
         }
     }
 
 
     // Add vertical padding to render canvas for special stars
-    vector<string> row(stoi(argv[2]));
+    vector<string> row(dimX);
     for (int i = 0; i < row.size(); i++) row[i] = " ";
     render.insert(render.begin(), row);
     render.push_back(row);
+    vector<char> skipChars = {'-', '|', '/', '\\'};
 
 
     for (int i = 0; i < field.size(); i++) {
         for (int j = 0; j < field[i].size(); j++) {
             string color = colors[rand() % colors.size()];
 
+            int randDec = rand() % 20;
+
             // Add surrounding flare to special stars
-            if (field[i][j] == "O" || field[i][j] == "0") {
+            if ((field[i][j] == "O" || field[i][j] == "0") && randDec < 15) {
                 render[i+1][j-1] = color + "-" + ENDC;
                 render[i+1][j+1] = color + "-" + ENDC;
             }
-            if (field[i][j] == "0") {
+            if (field[i][j] == "0" && randDec < 10) {
                 render[i][j] = color + "|" + ENDC;
                 render[i+2][j] = color + "|" + ENDC;
+            }
+            if (field[i][j] == "0" && randDec < 1) {
+                render[i+2][j-1] = color + "/" + ENDC;
+                render[i+2][j+1] = color + "\\" + ENDC;
+                render[i][j-1] = color + "\\" + ENDC;
+                render[i][j+1] = color + "/" + ENDC;
             }
 
 
             // Place color and primary star char on canvas, but avoid overwriting existing chars
             // (can't do direct string comparison to check because colors are embedded in the strings)
-            if (render[i+1][j].find('-') == string::npos && render[i+1][j].find('|') == string::npos) {
+            bool overWrite = true;
+
+            for (char ch : skipChars)
+                if (render[i+1][j].find(ch) != string::npos)
+                    overWrite = false;
+            
+            if (overWrite)
                 render[i+1][j] = color + field[i][j] + ENDC;
-            }
         }
     }
 
@@ -344,13 +405,13 @@ int main(int argc, char** argv) {
     int x = rand() % (render[0].size() - shipLength);
     int y = rand() % (render.size() - shipHeight);
 
-    if (x < (render[0].size() / 2))
+    if (x + (shipLength / 2) > (dimX / 2))
         Reverse(ship);
     
     Overlay(render, ship, x, y);
 
 
-    //     bool reverse = rand() % 1;
+        // bool reverse = rand() % 1;
     // if (reverse) 
 
     
